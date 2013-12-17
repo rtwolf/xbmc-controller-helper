@@ -9,17 +9,18 @@
 
 ~1joy13::
 	Process, Exist, XBMC.exe ; check if it is running
-		If (ErrorLevel = 0) ; if it's not running
+		If (ErrorLevel = 0) ; PID = 0 it's not running
 			{
 			IfExist, %A_ProgramFiles%\XBMC\XBMC.exe
 				Run,%A_ProgramFiles%\XBMC\XBMC.exe
 			Return
 			}
-		else
+		else ; ErrorLevel contains the process id (PID)
 			{
-			#IfWinNotActive, XBMC
+			IfWinNotActive ahk_pid %ErrorLevel%
+				{
 				Send !{f4}
-				WinActivate, XBMC
-			#IfWinNotActive
+				WinActivate ahk_pid %ErrorLevel%
+				}
 			}
 	Return
