@@ -1,0 +1,38 @@
+Instructions:
+1.Run JoystickTest and create your mapping (the mapping buttons should be the same as in XBMC)
+
+Name from AHK: Microsoft PC-joystick driver (#1)
+
+Thumbsticks:
+50 is centered for all above
+
+X100 - left thumbstick right
+	x000 left
+Y100 - left thumbstick down
+	Y000 up
+Z100 - right thumbstick right
+	z000 left
+R100 - right thumbstick down
+	r000 up
+
+D-pad:
+POV-1 centered
+POV0 up
+POV27000 left
+POV9000 right
+POV18000 down
+
+<!--   ID - Button on Controller -->
+<!--   1  - Square       -->
+<!--   2  - X            -->
+<!--   3  - Circle       -->
+<!--   4  - Triangle     -->
+<!--   5  - L1     -->
+<!--   6  - R1  -->
+<!--   7  - L2   -->
+<!--   8  - R2   -->
+<!--   9  - Select       -->
+<!--   10 - Start        -->
+<!--   11 - Left Thumbstick      -->
+<!--   12 - Right Thumbstick     -->
+<!--   13 - PS button    -->
