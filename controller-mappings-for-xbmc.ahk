@@ -19,6 +19,7 @@
 			{
 			#IfWinNotActive, XBMC
 				Send !{f4}
+				WinActivate, XBMC
 			#IfWinNotActive
 			}
 	Return
