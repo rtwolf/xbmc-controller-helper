@@ -5,6 +5,8 @@
 ; In the line "~1joy13::" replace the 13 with the number of your PS/X/Home (or whatever) button
 ; as determined by JoystickTest.ahk or through XBMC.
 
+; Additional tip for mame: Set "UI Cancel" to the PS/X/Home as well and it'll quit back to XBMC.
+
 #Persistent ; Keeps it running until explicitly ended by user
 
 ~1joy13::
@@ -19,6 +21,7 @@
 			{
 			IfWinNotActive ahk_pid %ErrorLevel%
 				{
+				Sleep, 500 ; Wait half a second to allow MAME to quit.
 				Send !{f4}
 				WinActivate ahk_pid %ErrorLevel%
 				}
