@@ -23,6 +23,7 @@
 				{
 				Sleep, 500 ; Wait half a second to allow MAME to quit.
 				Send !{f4}
+				Sleep, 500
 				WinActivate ahk_pid %ErrorLevel%
 				}
 			}
