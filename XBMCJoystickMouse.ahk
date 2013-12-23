@@ -41,124 +41,137 @@ JoystickNumber = 1
 
 Process, Exist, XBMC.exe ; check if it is running
 IfWinNotActive ahk_pid %ErrorLevel%
-{
+	{
+	Process, Exist, Project64.exe ; check if it is running
+	IfWinNotActive ahk_pid %ErrorLevel%
+		{
+		Process, Exist, mame.exe ; check if it is running
+		IfWinNotActive ahk_pid %ErrorLevel%
+			{
+			Process, Exist, snes9x.exe ; check if it is running
+			IfWinNotActive ahk_pid %ErrorLevel%
+				{
+
+						JoystickPrefix = %JoystickNumber%Joy
+						Hotkey, %JoystickPrefix%%ButtonLeft%, ButtonLeft
+						Hotkey, %JoystickPrefix%%ButtonRight%, ButtonRight
+						Hotkey, %JoystickPrefix%%ButtonMiddle%, ButtonMiddle
+
+						; Calculate the axis displacements that are needed to start moving the cursor:
+						JoyThresholdUpper := 50 + JoyThreshold
+						JoyThresholdLower := 50 - JoyThreshold
+						if InvertYAxis
+							YAxisMultiplier = -1
+						else
+							YAxisMultiplier = 1
+
+						SetTimer, WatchJoystick, 10  ; Monitor the movement of the joystick.
+
+						GetKeyState, JoyInfo, %JoystickNumber%JoyInfo
+						IfInString, JoyInfo, P  ; Joystick has POV control, so use it as a mouse wheel.
+							SetTimer, MouseWheel, %WheelDelay%
+
+						return  ; End of auto-execute section.
 
 
-JoystickPrefix = %JoystickNumber%Joy
-Hotkey, %JoystickPrefix%%ButtonLeft%, ButtonLeft
-Hotkey, %JoystickPrefix%%ButtonRight%, ButtonRight
-Hotkey, %JoystickPrefix%%ButtonMiddle%, ButtonMiddle
+						; The subroutines below do not use KeyWait because that would sometimes trap the
+						; WatchJoystick quasi-thread beneath the wait-for-button-up thread, which would
+						; effectively prevent mouse-dragging with the joystick.
 
-; Calculate the axis displacements that are needed to start moving the cursor:
-JoyThresholdUpper := 50 + JoyThreshold
-JoyThresholdLower := 50 - JoyThreshold
-if InvertYAxis
-	YAxisMultiplier = -1
-else
-	YAxisMultiplier = 1
+						ButtonLeft:
+						SetMouseDelay, -1  ; Makes movement smoother.
+						MouseClick, left,,, 1, 0, D  ; Hold down the left mouse button.
+						SetTimer, WaitForLeftButtonUp, 10
+						return
 
-SetTimer, WatchJoystick, 10  ; Monitor the movement of the joystick.
+						ButtonRight:
+						SetMouseDelay, -1  ; Makes movement smoother.
+						MouseClick, right,,, 1, 0, D  ; Hold down the right mouse button.
+						SetTimer, WaitForRightButtonUp, 10
+						return
 
-GetKeyState, JoyInfo, %JoystickNumber%JoyInfo
-IfInString, JoyInfo, P  ; Joystick has POV control, so use it as a mouse wheel.
-	SetTimer, MouseWheel, %WheelDelay%
+						ButtonMiddle:
+						SetMouseDelay, -1  ; Makes movement smoother.
+						MouseClick, middle,,, 1, 0, D  ; Hold down the right mouse button.
+						SetTimer, WaitForMiddleButtonUp, 10
+						return
 
-return  ; End of auto-execute section.
+						WaitForLeftButtonUp:
+						if GetKeyState(JoystickPrefix . ButtonLeft)
+							return  ; The button is still, down, so keep waiting.
+						; Otherwise, the button has been released.
+						SetTimer, WaitForLeftButtonUp, off
+						SetMouseDelay, -1  ; Makes movement smoother.
+						MouseClick, left,,, 1, 0, U  ; Release the mouse button.
+						return
 
+						WaitForRightButtonUp:
+						if GetKeyState(JoystickPrefix . ButtonRight)
+							return  ; The button is still, down, so keep waiting.
+						; Otherwise, the button has been released.
+						SetTimer, WaitForRightButtonUp, off
+						MouseClick, right,,, 1, 0, U  ; Release the mouse button.
+						return
 
-; The subroutines below do not use KeyWait because that would sometimes trap the
-; WatchJoystick quasi-thread beneath the wait-for-button-up thread, which would
-; effectively prevent mouse-dragging with the joystick.
+						WaitForMiddleButtonUp:
+						if GetKeyState(JoystickPrefix . ButtonMiddle)
+							return  ; The button is still, down, so keep waiting.
+						; Otherwise, the button has been released.
+						SetTimer, WaitForMiddleButtonUp, off
+						MouseClick, middle,,, 1, 0, U  ; Release the mouse button.
+						return
 
-ButtonLeft:
-SetMouseDelay, -1  ; Makes movement smoother.
-MouseClick, left,,, 1, 0, D  ; Hold down the left mouse button.
-SetTimer, WaitForLeftButtonUp, 10
-return
+						WatchJoystick:
+						MouseNeedsToBeMoved := false  ; Set default.
+						SetFormat, float, 03
+						GetKeyState, joyx, %JoystickNumber%JoyX
+						GetKeyState, joyy, %JoystickNumber%JoyY
+						if joyx > %JoyThresholdUpper%
+						{
+							MouseNeedsToBeMoved := true
+							DeltaX := joyx - JoyThresholdUpper
+						}
+						else if joyx < %JoyThresholdLower%
+						{
+							MouseNeedsToBeMoved := true
+							DeltaX := joyx - JoyThresholdLower
+						}
+						else
+							DeltaX = 0
+						if joyy > %JoyThresholdUpper%
+						{
+							MouseNeedsToBeMoved := true
+							DeltaY := joyy - JoyThresholdUpper
+						}
+						else if joyy < %JoyThresholdLower%
+						{
+							MouseNeedsToBeMoved := true
+							DeltaY := joyy - JoyThresholdLower
+						}
+						else
+							DeltaY = 0
+						if MouseNeedsToBeMoved
+						{
+							SetMouseDelay, -1  ; Makes movement smoother.
+							MouseMove, DeltaX * JoyMultiplier, DeltaY * JoyMultiplier * YAxisMultiplier, 0, R
+						}
+						return
 
-ButtonRight:
-SetMouseDelay, -1  ; Makes movement smoother.
-MouseClick, right,,, 1, 0, D  ; Hold down the right mouse button.
-SetTimer, WaitForRightButtonUp, 10
-return
-
-ButtonMiddle:
-SetMouseDelay, -1  ; Makes movement smoother.
-MouseClick, middle,,, 1, 0, D  ; Hold down the right mouse button.
-SetTimer, WaitForMiddleButtonUp, 10
-return
-
-WaitForLeftButtonUp:
-if GetKeyState(JoystickPrefix . ButtonLeft)
-	return  ; The button is still, down, so keep waiting.
-; Otherwise, the button has been released.
-SetTimer, WaitForLeftButtonUp, off
-SetMouseDelay, -1  ; Makes movement smoother.
-MouseClick, left,,, 1, 0, U  ; Release the mouse button.
-return
-
-WaitForRightButtonUp:
-if GetKeyState(JoystickPrefix . ButtonRight)
-	return  ; The button is still, down, so keep waiting.
-; Otherwise, the button has been released.
-SetTimer, WaitForRightButtonUp, off
-MouseClick, right,,, 1, 0, U  ; Release the mouse button.
-return
-
-WaitForMiddleButtonUp:
-if GetKeyState(JoystickPrefix . ButtonMiddle)
-	return  ; The button is still, down, so keep waiting.
-; Otherwise, the button has been released.
-SetTimer, WaitForMiddleButtonUp, off
-MouseClick, middle,,, 1, 0, U  ; Release the mouse button.
-return
-
-WatchJoystick:
-MouseNeedsToBeMoved := false  ; Set default.
-SetFormat, float, 03
-GetKeyState, joyx, %JoystickNumber%JoyX
-GetKeyState, joyy, %JoystickNumber%JoyY
-if joyx > %JoyThresholdUpper%
-{
-	MouseNeedsToBeMoved := true
-	DeltaX := joyx - JoyThresholdUpper
-}
-else if joyx < %JoyThresholdLower%
-{
-	MouseNeedsToBeMoved := true
-	DeltaX := joyx - JoyThresholdLower
-}
-else
-	DeltaX = 0
-if joyy > %JoyThresholdUpper%
-{
-	MouseNeedsToBeMoved := true
-	DeltaY := joyy - JoyThresholdUpper
-}
-else if joyy < %JoyThresholdLower%
-{
-	MouseNeedsToBeMoved := true
-	DeltaY := joyy - JoyThresholdLower
-}
-else
-	DeltaY = 0
-if MouseNeedsToBeMoved
-{
-	SetMouseDelay, -1  ; Makes movement smoother.
-	MouseMove, DeltaX * JoyMultiplier, DeltaY * JoyMultiplier * YAxisMultiplier, 0, R
-}
-return
-
-MouseWheel:
-GetKeyState, JoyPOV, %JoystickNumber%JoyPOV
-if JoyPOV = -1  ; No angle.
-	return
-if (JoyPOV > 31500 or JoyPOV < 4500)  ; Forward
-	Send {WheelUp}
-else if JoyPOV between 13500 and 22500  ; Back
-	Send {WheelDown}
-return
-
+						MouseWheel:
+						GetKeyState, JoyPOV, %JoystickNumber%JoyPOV
+						if JoyPOV = -1  ; No angle.
+							return
+						if (JoyPOV > 31500 or JoyPOV < 4500)  ; Forward
+							Send {WheelUp}
+						else if JoyPOV between 13500 and 22500  ; Back
+							Send {WheelDown}
+						return
+			}
+			Return
+		}
+		Return		
+	}
+	Return
 
 }
 Return
